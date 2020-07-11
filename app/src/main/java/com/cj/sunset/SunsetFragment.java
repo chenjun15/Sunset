@@ -4,12 +4,12 @@ import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.content.res.Resources;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AnimationSet;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -46,7 +46,12 @@ public class SunsetFragment extends Fragment {
         mSceneView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startAnimation();
+                int skyColor = ((ColorDrawable) mSkyView.getBackground()).getColor();
+                if (skyColor == mBlueSkyColor) {
+                    startAnimation();
+                } else if (skyColor == mNightSkyColor) {
+                    startRevertAnimation();
+                }
             }
         });
 
@@ -69,6 +74,25 @@ public class SunsetFragment extends Fragment {
         animatorSet.play(heightAnimator)
                 .with(sunsetSkyAnimator)
                 .before(nightSkyAnimator);
+        animatorSet.start();
+    }
+
+    private void startRevertAnimation() {
+        float sunYStart = mSunView.getTop(), sunYEnd = mSkyView.getHeight();
+
+        ObjectAnimator nightSkyAnimator = ObjectAnimator.ofInt(mSkyView, "backgroundColor", mNightSkyColor, mSunsetSkyColor).setDuration(1500);
+        nightSkyAnimator.setEvaluator(new ArgbEvaluator());
+
+        ObjectAnimator heightAnimator = ObjectAnimator.ofFloat(mSunView, "y", sunYEnd, sunYStart).setDuration(3200);
+        heightAnimator.setInterpolator(new AccelerateInterpolator());
+
+        ObjectAnimator sunsetSkyAnimator = ObjectAnimator.ofInt(mSkyView, "backgroundColor", mSunsetSkyColor, mBlueSkyColor).setDuration(3000);
+        sunsetSkyAnimator.setEvaluator(new ArgbEvaluator());
+
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.play(heightAnimator)
+                .with(sunsetSkyAnimator)
+                .after(nightSkyAnimator);
         animatorSet.start();
     }
 }
